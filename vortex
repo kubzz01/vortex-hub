@@ -10,7 +10,7 @@ local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/kubz
 OrionLib:MakeNotification({
     Name = "Vortex Hub Loading...",
     Content = "Harap tunggu sebentar",
-    Image = "rbxassetid://80188749139013",
+    Image = "rbxassetid://801887491390",
     Time = 3
 })
 
@@ -24,9 +24,9 @@ local Window = OrionLib:MakeWindow({
     ConfigFolder = "VortexHubConfig",
     IntroEnabled = true,
     IntroText = "Vortex Hub",
-    IntroIcon = "rbxassetid://80188749139013",
+    IntroIcon = "rbxassetid://801887491390",
     ShowIcon = true,
-    Icon = "rbxassetid://80188749139013",
+    Icon = "rbxassetid://801887491390",
     Dragable = true  
 })
 
@@ -34,7 +34,7 @@ local Window = OrionLib:MakeWindow({
 -- Tab Universal Scripts
 local UniversalTab = Window:MakeTab({
     Name = "Universal Scripts",
-    Icon = "rbxassetid://80188749139013",  -- Ganti dengan logo yang kamu inginkan
+    Icon = "rbxassetid://801887491390",  -- Ganti dengan logo yang kamu inginkan
     PremiumOnly = false
 })
 
@@ -48,14 +48,14 @@ UniversalTab:AddButton({
 UniversalTab:AddButton({
     Name = "ESP Script",
     Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/YOURESPSCRIPT"))()
+        loadstring(game:HttpGet(""))()
     end
 })
 
 -- Tab Game Specific Scripts
 local GameTab = Window:MakeTab({
     Name = "Game Scripts",
-    Icon = "rbxassetid://80188749139013",  -- Ganti dengan logo yang kamu inginkan
+    Icon = "rbxassetid://801887491390",  -- Ganti dengan logo yang kamu inginkan
     PremiumOnly = false
 })
 
