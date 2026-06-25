@@ -1,5 +1,3 @@
-
-
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
@@ -97,11 +95,12 @@ task.spawn(function()
 	end
 end)
 
+-- [PERBAIKAN ANIMASI DRAG]: Menggunakan Tween halus (0.15 detik Quint) agar gerakan menu mengikuti video Anda
 local function AddDraggingFunctionality(DragPoint, Main)
 	pcall(function()
 		local Dragging, DragInput, MousePos, FramePos = false
 		DragPoint.InputBegan:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+			if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
 				Dragging = true
 				MousePos = Input.Position
 				FramePos = Main.Position
@@ -114,14 +113,16 @@ local function AddDraggingFunctionality(DragPoint, Main)
 			end
 		end)
 		DragPoint.InputChanged:Connect(function(Input)
-			if Input.UserInputType == Enum.UserInputType.MouseMovement then
+			if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
 				DragInput = Input
 			end
 		end)
 		UserInputService.InputChanged:Connect(function(Input)
 			if Input == DragInput and Dragging then
 				local Delta = Input.Position - MousePos
-				TweenService:Create(Main, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Position  = UDim2.new(FramePos.X.Scale,FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)}):Play()
+				TweenService:Create(Main, TweenInfo.new(0.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+					Position  = UDim2.new(FramePos.X.Scale, FramePos.X.Offset + Delta.X, FramePos.Y.Scale, FramePos.Y.Offset + Delta.Y)
+				}):Play()
 			end
 		end)
 	end)
@@ -629,15 +630,8 @@ function OrionLib:MakeWindow(WindowConfig)
 		Parent = Orion,
 		Position = UDim2.new(0.5, -307, 0.5, -172),
 		Size = UDim2.new(0, 615, 0, 344),
-		ClipsDescendants = true
+		ClipsDescendants = false -- [DIUBAH KE FALSE]: Agar logo diatas menu utama tidak terpotong!
 	}), {
-		--SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
-		--	AnchorPoint = Vector2.new(0.5, 0.5),
-		--	Position = UDim2.new(0.5, 0, 0.5, 0),
-		--	Size = UDim2.new(1, 80, 1, 320),
-		--	ImageColor3 = Color3.fromRGB(33, 33, 33),
-		--	ImageTransparency = 0.7
-		--}),
 		SetChildren(SetProps(MakeElement("TFrame"), {
 			Size = UDim2.new(1, 0, 0, 50),
 			Name = "TopBar"
@@ -689,21 +683,19 @@ function OrionLib:MakeWindow(WindowConfig)
 		end
 	end)
 
-	-- [PERBAIKAN: FLOATING TOGGLE BUTTON KOTAK MELENGKUNG + IMAGE FIXED]
 	local FloatingBtn = Create("ImageButton", {
 		Parent = Orion,
 		Name = "VortexFloatingBtn",
-		Size = UDim2.new(0, 0, 0, 0), -- Mulai dari ukuran 0 untuk animasi popup
+		Size = UDim2.new(0, 0, 0, 0),
 		Position = UDim2.new(0, 20, 0.4, 0),
 		BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-		-- Menggunakan format rbxthumb agar gambar ninja kamu PASTI muncul
 		Image = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150", 
-		ImageTransparency = 1, -- Mulai dari transparan
+		ImageTransparency = 1,
 		BackgroundTransparency = 1,
 		Visible = false,
 		ZIndex = 10,
 	}, {
-		Create("UICorner", { CornerRadius = UDim.new(0, 10) }), -- Sudut kotak melengkung rapi
+		Create("UICorner", { CornerRadius = UDim.new(0, 10) }),
 		Create("UIStroke", { 
 			Color = Color3.fromRGB(9, 99, 195), 
 			Thickness = 2,
@@ -711,16 +703,13 @@ function OrionLib:MakeWindow(WindowConfig)
 		})
 	})
 
-	-- Membuat Floating Button bisa digeser-geser di layar HP
 	AddDraggingFunctionality(FloatingBtn, FloatingBtn)
 
-	-- Fungsi saat tombol minimize di TopBar diklik (Menu Utama Mengecil)
 	AddConnection(MinimizeBtn.MouseButton1Up, function()
 		MainWindow.Visible = false
 		FloatingBtn.Visible = true
 		Minimized = true
 		
-		-- Animasi Membuka Tombol Melayang secara Smooth
 		TweenService:Create(FloatingBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 			Size = UDim2.new(0, 48, 0, 48),
 			ImageTransparency = 0,
@@ -731,9 +720,7 @@ function OrionLib:MakeWindow(WindowConfig)
 		}):Play()
 	end)
 
-	-- Fungsi saat Logo Ninja Melayang diklik (Membuka Menu Kembali)
 	AddConnection(FloatingBtn.MouseButton1Click, function()
-		-- Animasi Mengecilkan Tombol Melayang secara Smooth sebelum hilang
 		local CloseTween = TweenService:Create(FloatingBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
 			Size = UDim2.new(0, 0, 0, 0),
 			ImageTransparency = 1,
@@ -744,14 +731,11 @@ function OrionLib:MakeWindow(WindowConfig)
 		}):Play()
 		
 		CloseTween:Play()
-		
-		-- Menunggu animasi tombol melayang selesai, baru munculkan window utama
 		CloseTween.Completed:Wait()
 		FloatingBtn.Visible = false
 		MainWindow.Visible = true
 		Minimized = false
 		
-		-- Bonus: Efek popup sedikit pada window utama agar transisinya keren
 		local OldSize = MainWindow.Size
 		MainWindow.Size = UDim2.new(0, 0, 0, 0)
 		TweenService:Create(MainWindow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
@@ -759,14 +743,14 @@ function OrionLib:MakeWindow(WindowConfig)
 		}):Play()
 	end)
 
-
+	-- [PERBAIKAN LOGIKA INTRO SELESAI]: Logo dipindah ke menu utama & bisa ikut digeser
 	local function LoadSequence()
 		MainWindow.Visible = false
 		local LoadSequenceLogo = SetProps(MakeElement("Image", WindowConfig.IntroIcon), {
 			Parent = Orion,
 			AnchorPoint = Vector2.new(0.5, 0.5),
 			Position = UDim2.new(0.5, 0, 0.4, 0),
-			Size = UDim2.new(0, 28, 0, 28),
+			Size = UDim2.new(0, 100, 0, 100), -- Ukuran proporsional intro
 			ImageColor3 = Color3.fromRGB(255, 255, 255),
 			ImageTransparency = 1
 		})
@@ -775,26 +759,49 @@ function OrionLib:MakeWindow(WindowConfig)
 			Parent = Orion,
 			Size = UDim2.new(1, 0, 1, 0),
 			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.new(0.5, 19, 0.5, 0),
+			Position = UDim2.new(0.5, 60, 0.5, 0),
 			TextXAlignment = Enum.TextXAlignment.Center,
 			Font = Enum.Font.GothamBold,
 			TextTransparency = 1
 		})
 
-		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, 0)}):Play()
+		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, -40)}):Play()
 		wait(0.8)
-		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -(LoadSequenceText.TextBounds.X/2), 0.5, 0)}):Play()
+		TweenService:Create(LoadSequenceLogo, TweenInfo.new(.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -(LoadSequenceText.TextBounds.X/2) - 10, 0.5, -40)}):Play()
 		wait(0.3)
-		TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
+		TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 0, Position = UDim2.new(0.5, 50, 0.5, -40)}):Play()
 		wait(2)
 		TweenService:Create(LoadSequenceText, TweenInfo.new(.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {TextTransparency = 1}):Play()
+		
+		-- Membuka Main Window
 		MainWindow.Visible = true
-		LoadSequenceLogo:Destroy()
+		
+		-- Alih-alih dihancurkan (:Destroy), kita pindahkan logo ke MainWindow (di atas menu)
+		LoadSequenceLogo.Parent = MainWindow
+		LoadSequenceLogo.AnchorPoint = Vector2.new(0.5, 0.5)
+		
+		-- Reposisi Logo ke Atas Menu Utama secara smooth dengan animasi meluncur
+		LoadSequenceLogo.Position = UDim2.new(0.5, 0, 0, -30)
+		LoadSequenceLogo.Size = UDim2.new(0, 90, 0, 90) -- Menyesuaikan ukuran pajangan di atas menu
+
+		-- Tambahkan fungsi drag manual pada logo tersebut agar jika logo ditarik, seluruh menu ikut bergeser
+		AddDraggingFunctionality(LoadSequenceLogo, MainWindow)
+		
 		LoadSequenceText:Destroy()
 	end 
 
 	if WindowConfig.IntroEnabled then
 		LoadSequence()
+	else
+		-- Jika intro dimatikan, logo pajangan instan dibuat secara otomatis agar tidak hilang
+		local QuickLogo = SetProps(MakeElement("Image", WindowConfig.IntroIcon), {
+			Parent = MainWindow,
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.new(0.5, 0, 0, -30),
+			Size = UDim2.new(0, 90, 0, 90),
+			BackgroundTransparency = 1
+		})
+		AddDraggingFunctionality(QuickLogo, MainWindow)
 	end	
 
 	local TabFunction = {}
@@ -1363,7 +1370,6 @@ function OrionLib:MakeWindow(WindowConfig)
 				}), "Second")
 
 				AddConnection(BindBox.Value:GetPropertyChangedSignal("Text"), function()
-					--BindBox.Size = UDim2.new(0, BindBox.Value.TextBounds.X + 16, 0, 24)
 					TweenService:Create(BindBox, TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, BindBox.Value.TextBounds.X + 16, 0, 24)}):Play()
 				end)
 
@@ -1489,7 +1495,6 @@ function OrionLib:MakeWindow(WindowConfig)
 				}), "Second")
 
 				AddConnection(TextboxActual:GetPropertyChangedSignal("Text"), function()
-					--TextContainer.Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)
 					TweenService:Create(TextContainer, TweenInfo.new(0.45, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {Size = UDim2.new(0, TextboxActual.TextBounds.X + 16, 0, 24)}):Play()
 				end)
 
@@ -1772,8 +1777,7 @@ function OrionLib:MakeWindow(WindowConfig)
 					Position = UDim2.new(0, 84, 0, 110),
 				}), "Text"),
 				AddThemeObject(SetProps(MakeElement("Label", "Premium Features", 14), {
-					Size = UDim2.new(1, -150, 0, 14),
-					Position = UDim2.new(0, 150, 0, 112),
+					Size = UDim2.new(1, -150, 0, 112),
 					Font = Enum.Font.GothamBold
 				}), "Text"),
 				AddThemeObject(SetProps(MakeElement("Label", "This part of the script is locked to Sirius Premium users. Purchase Premium in the Discord server (sirius.menu/discord)", 12), {
@@ -1792,8 +1796,6 @@ function OrionLib:MakeWindow(WindowConfig)
 		Content = "New UI Library Available at sirius.menu/discord and sirius.menu/rayfield",
 		Time = 5
 	})
-	
-
 	
 	return TabFunction
 end   
