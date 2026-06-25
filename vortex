@@ -1,83 +1,290 @@
-local placeId = 93978595733734 -- ID game kamu
+-- =======================================================
+-- ANTI-BYPASS: KUNCI GAME (VIOLENCE DISTRICT)
+-- =======================================================
+local TargetPlaceIds = {15331542475, 93978595733734} -- ID Utama Violence District (Lobby & Game)
+local isCorrectGame = false
 
--- [PERBAIKAN LOGIKA]: Menggunakan ~= (tidak sama dengan) agar script HANYA berjalan di game kamu
-if game.PlaceId ~= placeId then
-    warn("Script tidak berjalan di game ini")
-    return -- Berhenti jika dimainkan di game lain
+for _, id in pairs(TargetPlaceIds) do
+    if game.PlaceId == id then
+        isCorrectGame = true
+        break
+    end
 end
 
-local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/kubzz01/vortex-hub/refs/heads/main/source"))()
+if not isCorrectGame then
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "❌ Vortex Hub Error",
+        Text = "Script ini hanya dapat dijalankan di Violence District!",
+        Duration = 8
+    })
+    return 
+end
 
--- Menampilkan notifikasi Loading
-OrionLib:MakeNotification({
-    Name = "Vortex Hub Loading...",
-    Content = "Harap tunggu sebentar",
-    -- Diubah ke rbxthumb agar gambar notifikasi muncul
-    Image = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
-    Time = 3
-})
+-- =======================================================
+-- INISIALISASI ENGINE & LIBRARY
+-- =======================================================
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local VirtualUser = game:GetService("VirtualUser")
+local UserInputService = game:GetService("UserInputService")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
-wait(3)
-
--- Membuat Window dengan Logo dan animasi Intro
+-- Pembuatan Window Utama (Desain Gelap Elegan ala Vortex Hub)
 local Window = OrionLib:MakeWindow({
-    Name = "Vortex Hub | Violence District",
-    HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "VortexHubConfig",
-    IntroEnabled = true,
-    IntroText = "Vortex Hub",
-    -- Diubah ke rbxthumb agar animasi logo intro muncul
-    IntroIcon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
-    ShowIcon = true,
-    -- Diubah ke rbxthumb agar logo di pojok kiri atas menu muncul
-    Icon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
-    Dragable = true  
+    Name = "Vortex Hub 🌌 Violence District", 
+    HidePremium = true, 
+    SaveConfig = true, 
+    ConfigFolder = "VortexHub_VD",
+    IntroText = "Initializing Vortex Hub..."
 })
 
--- Tab Universal Scripts
-local UniversalTab = Window:MakeTab({
-    Name = "Universal Scripts",
-    -- Diubah ke rbxthumb dengan ID baru kamu agar ikon tab muncul
-    Icon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
-    PremiumOnly = false
-})
+-- State/Flags untuk mengontrol fungsionalitas fitur
+local Flags = {
+    AutoParry = false,
+    AutoSkillcheck = false,
+    PlayerESP = false,
+    SilentAim = false
+}
 
-UniversalTab:AddButton({
-    Name = "Fly Script",
+-- Fungsi Pembantu Input Otomatis (Akurat untuk HP & PC)
+local function triggerUniversalInput(keyCode)
+    if UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled then
+        -- Simulasi Tap Layar untuk pengguna HP
+        VirtualUser:Button1Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+        task.wait(0.02)
+        VirtualUser:Button1Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
+    else
+        -- Simulasi Tekan Tombol Keyboard untuk pengguna PC
+        VirtualInputManager:SendKeyEvent(true, keyCode, false, game)
+        task.wait(0.02)
+        VirtualInputManager:SendKeyEvent(false, keyCode, false, game)
+    end
+end
+
+-- =======================================================
+-- TAB 1: SERVER & INFO
+-- =======================================================
+local InfoTab = Window:MakeTab({ Name = "Server", Icon = "rbxassetid://4483345998" })
+
+InfoTab:AddSection({ Name = "Room Utilities" })
+
+InfoTab:AddButton({
+    Name = "Rejoin Server",
     Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/YOURFLYSCRIPT"))()
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    end    
+})
+
+InfoTab:AddButton({
+    Name = "Server Hop (Cari Server Baru)",
+    Callback = function()
+        local x = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        for _, v in pairs(x.data) do
+            if v.playing < v.maxPlayers and v.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id, LocalPlayer)
+                break
+            end
+        end
+    end    
+})
+
+-- =======================================================
+-- TAB 2: SURVIVOR (FITUR UTAMA)
+-- =======================================================
+local SurvivorTab = Window:MakeTab({ Name = "Survivor", Icon = "rbxassetid://4483345998" })
+
+SurvivorTab:AddSection({ Name = "Automation Hacks" })
+
+-- Fungsionalitas Auto Parry Real-Time
+SurvivorTab:AddToggle({
+    Name = "Auto Parry / Auto Block",
+    Default = false,
+    Callback = function(Value)
+        Flags.AutoParry = Value
+        task.spawn(function()
+            while Flags.AutoParry do
+                task.wait()
+                pcall(function()
+                    for _, object in pairs(workspace:GetChildren()) do
+                        if object:FindFirstChild("HumanoidRootPart") and object.Name ~= LocalPlayer.Name then
+                            local enemyRoot = object.HumanoidRootPart
+                            local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                            
+                            if myRoot and enemyRoot then
+                                local distance = (myRoot.Position - enemyRoot.Position).Magnitude
+                                if distance <= 12 then -- Jarak pemicu refleks parry
+                                    triggerUniversalInput(Enum.KeyCode.E) -- Menekan 'E' di PC / Tap di HP
+                                    task.wait(0.4) 
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
     end
 })
 
-UniversalTab:AddButton({
-    Name = "ESP Script",
-    Callback = function()
-        loadstring(game:HttpGet(""))()
+-- Fungsionalitas Auto Skillcheck Perfect Frame
+SurvivorTab:AddToggle({
+    Name = "Auto Skillcheck Perfect",
+    Default = false,
+    Callback = function(Value)
+        Flags.AutoSkillcheck = Value
+        task.spawn(function()
+            while Flags.AutoSkillcheck do
+                task.wait(0.01)
+                pcall(function()
+                    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+                    for _, gui in pairs(PlayerGui:GetDescendants()) do
+                        if gui.Name:lower():find("skillcheck") or gui.Name:lower():find("qte") or gui.Name:lower():find("minigame") then
+                            local indicator = gui:FindFirstChild("Indicator", true) or gui:FindFirstChild("Pointer", true) or gui:FindFirstChild("Arrow", true)
+                            local perfectZone = gui:FindFirstChild("Perfect", true) or gui:FindFirstChild("Success", true) or gui:FindFirstChild("GreenZone", true)
+                            
+                            if indicator and perfectZone then
+                                local indPos = indicator.AbsolutePosition.X
+                                local perfPosMin = perfectZone.AbsolutePosition.X
+                                local perfPosMax = perfPosMin + perfectZone.AbsoluteSize.X
+                                
+                                if indPos >= perfPosMin and indPos <= perfPosMax then
+                                    local actionButton = gui:FindFirstChildOfClass("TextButton") or gui:FindFirstChildOfClass("ImageButton")
+                                    if actionButton and UserInputService.TouchEnabled then
+                                        guiisbuttonactivated(actionButton) -- Instant click tombol UI di HP
+                                    else
+                                        triggerUniversalInput(Enum.KeyCode.Space) -- Menekan Space di PC
+                                    end
+                                    task.wait(0.8)
+                                end
+                            end
+                        end
+                    end
+                end)
+            end
+        end)
     end
 })
 
--- Tab Game Specific Scripts
-local GameTab = Window:MakeTab({
-    Name = "Game Scripts",
-    -- Diubah ke rbxthumb dengan ID baru kamu (jika ingin disamakan dengan ID baru)
-    Icon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",  
-    PremiumOnly = false
-})
+-- =======================================================
+-- TAB 3: VISUALS (ESP TEMBUS DINDING)
+-- =======================================================
+local VisualsTab = Window:MakeTab({ Name = "Visuals", Icon = "rbxassetid://4483345998" })
 
-GameTab:AddButton({
-    Name = "Blox Fruits Script",
-    Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/YOURBLOXFRUITSSCRIPT"))()
+VisualsTab:AddSection({ Name = "Wallhacks" })
+
+local function applyHighlight(player)
+    if player == LocalPlayer then return end
+    local function addXray(char)
+        if not char:FindFirstChild("VortexXray") then
+            local highlight = Instance.new("Highlight")
+            highlight.Name = "VortexXray"
+            highlight.FillColor = Color3.fromRGB(0, 255, 150) -- Hijau Neon Khas Vortex
+            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+            highlight.FillTransparency = 0.4
+            highlight.Parent = char
+        end
+    end
+    if player.Character then addXray(player.Character) end
+    player.CharacterAdded:Connect(addXray)
+end
+
+local function removeHighlight()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p.Character and p.Character:FindFirstChild("VortexXray") then
+            p.Character.VortexXray:Destroy()
+        end
+    end
+end
+
+VisualsTab:AddToggle({
+    Name = "Enable Player ESP (Chams)",
+    Default = false,
+    Callback = function(Value)
+        Flags.PlayerESP = Value
+        if Flags.PlayerESP then
+            for _, p in pairs(Players:GetPlayers()) do applyHighlight(p) end
+            Players.PlayerAdded:Connect(applyHighlight)
+        else
+            removeHighlight()
+        end
     end
 })
 
-GameTab:AddButton({
-    Name = "Doors Script",
-    Callback = function()
-        loadstring(game:HttpGet("https://pastebin.com/raw/YOURDOORSSCRIPT"))()
+-- =======================================================
+-- TAB 4: COMBAT & AIM ASSIST
+-- =======================================================
+local CombatTab = Window:MakeTab({ Name = "Combat", Icon = "rbxassetid://4483345998" })
+
+CombatTab:AddSection({ Name = "Aim System" })
+
+local Camera = workspace.CurrentCamera
+CombatTab:AddToggle({
+    Name = "Silent Aim / Camera Lock",
+    Default = false,
+    Callback = function(Value)
+        Flags.SilentAim = Value
+        RunService.RenderStepped:Connect(function()
+            if not Flags.SilentAim then return end
+            local targetPlayer = nil
+            local maxDistance = math.huge
+            
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+                    local pos, visible = Camera:WorldToViewportPoint(player.Character.Head.Position)
+                    if visible then
+                        local mousePos = Vector2.new(LocalPlayer:GetMouse().X, LocalPlayer:GetMouse().Y)
+                        local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                        if dist < maxDistance then
+                            targetPlayer = player
+                            maxDistance = dist
+                        end
+                    end
+                end
+            end
+            
+            if targetPlayer and targetPlayer.Character then
+                Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetPlayer.Character.Head.Position)
+            end
+        end)
     end
 })
 
--- Menyimpan dan memuat konfigurasi
+-- =======================================================
+-- TAB 5: TWEAKS & CONFIG (SETTINGS)
+-- =======================================================
+local SettingsTab = Window:MakeTab({ Name = "Settings", Icon = "rbxassetid://4483345998" })
+
+SettingsTab:AddSection({ Name = "Character Mod" })
+
+SettingsTab:AddSlider({
+    Name = "WalkSpeed (Kecepatan)",
+    Min = 16,
+    Max = 120,
+    Default = 16,
+    Color = Color3.fromRGB(170, 0, 255),
+    Increment = 1,
+    ValueName = "Speed",
+    Callback = function(v)
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = v
+        end
+    end    
+})
+
+SettingsTab:AddButton({
+    Name = "Unload / Safety Close UI",
+    Callback = function()
+        Flags.AutoParry = false
+        Flags.AutoSkillcheck = false
+        Flags.PlayerESP = false
+        Flags.SilentAim = false
+        removeHighlight()
+        OrionLib:Destroy()
+    end    
+})
+
+-- Aktivasi Akhir UI
 OrionLib:Init()
