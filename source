@@ -480,8 +480,8 @@ function OrionLib:MakeWindow(WindowConfig)
 	WindowConfig.IntroText = WindowConfig.IntroText or "Orion Library"
 	WindowConfig.CloseCallback = WindowConfig.CloseCallback or function() end
 	WindowConfig.ShowIcon = WindowConfig.ShowIcon or false
-	WindowConfig.Icon = WindowConfig.Icon or "rbxassetid://80188749139013"
-	WindowConfig.IntroIcon = WindowConfig.IntroIcon or "rbxassetid://80188749139013"
+	WindowConfig.Icon = WindowConfig.Icon or "rbxassetid://801887491390"
+	WindowConfig.IntroIcon = WindowConfig.IntroIcon or "rbxassetid://801887491390"
 	OrionLib.Folder = WindowConfig.ConfigFolder
 	OrionLib.SaveCfg = WindowConfig.SaveConfig
 
@@ -688,18 +688,19 @@ function OrionLib:MakeWindow(WindowConfig)
 		end
 	end)
 
-		-- [KODE BARU UNTUK FLOATING TOGGLE BUTTON]
+			-- [PERBAIKAN: FLOATING TOGGLE BUTTON KOTAK MELENGKUNG]
 	local FloatingBtn = Create("ImageButton", {
 		Parent = Orion,
 		Name = "VortexFloatingBtn",
-		Size = UDim2.new(0, 50, 0, 50),
+		Size = UDim2.new(0, 45, 0, 45), -- Ukuran kotak proporsional
 		Position = UDim2.new(0, 20, 0.4, 0),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 30),
-		Image = "rbxassetid://80188749139013",
+		BackgroundColor3 = Color3.fromRGB(25, 25, 25), -- Warna background gelap menyatu dengan tema
+		-- Ganti ID di bawah ini dengan format rbxfrm/id jika didapatkan dari Creator Marketplace langsung
+		Image = "rbxassetid://801887491390", 
 		Visible = false,
 		ZIndex = 10,
 	}, {
-		Create("UICorner", { CornerRadius = UDim.new(1, 0) }),
+		Create("UICorner", { CornerRadius = UDim.new(0, 8) }), -- Membuat sudut kotak menjadi melengkung (bukan bulat penuh)
 		Create("UIStroke", { Color = Color3.fromRGB(9, 99, 195), Thickness = 2 })
 	})
 
@@ -713,7 +714,7 @@ function OrionLib:MakeWindow(WindowConfig)
 		Minimized = true
 	end)
 
-	-- Fungsi saat Logo Vortex Melayang diklik (Membuka Menu Kembali)
+	-- Fungsi saat Logo Ninja Melayang diklik (Membuka Menu Kembali)
 	AddConnection(FloatingBtn.MouseButton1Click, function()
 		MainWindow.Visible = true
 		FloatingBtn.Visible = false
