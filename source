@@ -480,8 +480,9 @@ function OrionLib:MakeWindow(WindowConfig)
 	WindowConfig.IntroText = WindowConfig.IntroText or "Orion Library"
 	WindowConfig.CloseCallback = WindowConfig.CloseCallback or function() end
 	WindowConfig.ShowIcon = WindowConfig.ShowIcon or false
-	WindowConfig.Icon = WindowConfig.Icon or "rbxassetid://801887491390"
-	WindowConfig.IntroIcon = WindowConfig.IntroIcon or "rbxassetid://801887491390"
+	WindowConfig.Icon = WindowConfig.Icon or "rbxthumb://type=Asset&id=75062134749633&w=150&h=150"
+	WindowConfig.IntroIcon = WindowConfig.IntroIcon or "rbxthumb://type=Asset&id=75062134749633&w=150&h=150"
+
 	OrionLib.Folder = WindowConfig.ConfigFolder
 	OrionLib.SaveCfg = WindowConfig.SaveConfig
 
@@ -688,37 +689,74 @@ function OrionLib:MakeWindow(WindowConfig)
 		end
 	end)
 
-			-- [PERBAIKAN: FLOATING TOGGLE BUTTON KOTAK MELENGKUNG]
+	-- [PERBAIKAN: FLOATING TOGGLE BUTTON KOTAK MELENGKUNG + IMAGE FIXED]
 	local FloatingBtn = Create("ImageButton", {
 		Parent = Orion,
 		Name = "VortexFloatingBtn",
-		Size = UDim2.new(0, 45, 0, 45), -- Ukuran kotak proporsional
+		Size = UDim2.new(0, 0, 0, 0), -- Mulai dari ukuran 0 untuk animasi popup
 		Position = UDim2.new(0, 20, 0.4, 0),
-		BackgroundColor3 = Color3.fromRGB(25, 25, 25), -- Warna background gelap menyatu dengan tema
-		-- Ganti ID di bawah ini dengan format rbxfrm/id jika didapatkan dari Creator Marketplace langsung
-		Image = "rbxassetid://801887491390", 
+		BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+		-- Menggunakan format rbxthumb agar gambar ninja kamu PASTI muncul
+		Image = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150", 
+		ImageTransparency = 1, -- Mulai dari transparan
+		BackgroundTransparency = 1,
 		Visible = false,
 		ZIndex = 10,
 	}, {
-		Create("UICorner", { CornerRadius = UDim.new(0, 8) }), -- Membuat sudut kotak menjadi melengkung (bukan bulat penuh)
-		Create("UIStroke", { Color = Color3.fromRGB(9, 99, 195), Thickness = 2 })
+		Create("UICorner", { CornerRadius = UDim.new(0, 10) }), -- Sudut kotak melengkung rapi
+		Create("UIStroke", { 
+			Color = Color3.fromRGB(9, 99, 195), 
+			Thickness = 2,
+			Transparency = 1
+		})
 	})
 
 	-- Membuat Floating Button bisa digeser-geser di layar HP
 	AddDraggingFunctionality(FloatingBtn, FloatingBtn)
 
-	-- Fungsi saat tombol minimize di TopBar diklik
+	-- Fungsi saat tombol minimize di TopBar diklik (Menu Utama Mengecil)
 	AddConnection(MinimizeBtn.MouseButton1Up, function()
 		MainWindow.Visible = false
 		FloatingBtn.Visible = true
 		Minimized = true
+		
+		-- Animasi Membuka Tombol Melayang secara Smooth
+		TweenService:Create(FloatingBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+			Size = UDim2.new(0, 48, 0, 48),
+			ImageTransparency = 0,
+			BackgroundTransparency = 0
+		}):Play()
+		TweenService:Create(FloatingBtn.UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Transparency = 0
+		}):Play()
 	end)
 
 	-- Fungsi saat Logo Ninja Melayang diklik (Membuka Menu Kembali)
 	AddConnection(FloatingBtn.MouseButton1Click, function()
-		MainWindow.Visible = true
+		-- Animasi Mengecilkan Tombol Melayang secara Smooth sebelum hilang
+		local CloseTween = TweenService:Create(FloatingBtn, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Size = UDim2.new(0, 0, 0, 0),
+			ImageTransparency = 1,
+			BackgroundTransparency = 1
+		})
+		TweenService:Create(FloatingBtn.UIStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
+			Transparency = 1
+		}):Play()
+		
+		CloseTween:Play()
+		
+		-- Menunggu animasi tombol melayang selesai, baru munculkan window utama
+		CloseTween.Completed:Wait()
 		FloatingBtn.Visible = false
+		MainWindow.Visible = true
 		Minimized = false
+		
+		-- Bonus: Efek popup sedikit pada window utama agar transisinya keren
+		local OldSize = MainWindow.Size
+		MainWindow.Size = UDim2.new(0, 0, 0, 0)
+		TweenService:Create(MainWindow, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+			Size = OldSize
+		}):Play()
 	end)
 
 
