@@ -1,7 +1,9 @@
-local placeId = 93978595733734 -- ganti dengan PlaceId game kamu
+local placeId = 93978595733734 -- ID game kamu
 
-if game.PlaceId == placeId then
+-- [PERBAIKAN LOGIKA]: Menggunakan ~= (tidak sama dengan) agar script HANYA berjalan di game kamu
+if game.PlaceId ~= placeId then
     warn("Script tidak berjalan di game ini")
+    return -- Berhenti jika dimainkan di game lain
 end
 
 local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/kubzz01/vortex-hub/refs/heads/main/source"))()
@@ -10,7 +12,8 @@ local OrionLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/kubz
 OrionLib:MakeNotification({
     Name = "Vortex Hub Loading...",
     Content = "Harap tunggu sebentar",
-    Image = "rbxassetid://801887491390",
+    -- Diubah ke rbxthumb agar gambar notifikasi muncul
+    Image = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
     Time = 3
 })
 
@@ -24,17 +27,19 @@ local Window = OrionLib:MakeWindow({
     ConfigFolder = "VortexHubConfig",
     IntroEnabled = true,
     IntroText = "Vortex Hub",
-    IntroIcon = "rbxassetid://801887491390",
+    -- Diubah ke rbxthumb agar animasi logo intro muncul
+    IntroIcon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
     ShowIcon = true,
-    Icon = "rbxassetid://801887491390",
+    -- Diubah ke rbxthumb agar logo di pojok kiri atas menu muncul
+    Icon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
     Dragable = true  
 })
-
 
 -- Tab Universal Scripts
 local UniversalTab = Window:MakeTab({
     Name = "Universal Scripts",
-    Icon = "rbxassetid://801887491390",  -- Ganti dengan logo yang kamu inginkan
+    -- Diubah ke rbxthumb dengan ID baru kamu agar ikon tab muncul
+    Icon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",
     PremiumOnly = false
 })
 
@@ -55,7 +60,8 @@ UniversalTab:AddButton({
 -- Tab Game Specific Scripts
 local GameTab = Window:MakeTab({
     Name = "Game Scripts",
-    Icon = "rbxassetid://801887491390",  -- Ganti dengan logo yang kamu inginkan
+    -- Diubah ke rbxthumb dengan ID baru kamu (jika ingin disamakan dengan ID baru)
+    Icon = "rbxthumb://type=Asset&id=75062134749633&w=150&h=150",  
     PremiumOnly = false
 })
 
